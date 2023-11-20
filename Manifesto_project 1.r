@@ -112,42 +112,6 @@ big_corpus <- bind_rows(tidied_corpora, .id = "party")
 #   2) Exploratory data analysis 
 # ===========================================================================
 
-tidied_corpus <- party_documents$Labour_Party %>% tidy()
-tidied_corpus
-
-
-# Analyse the word frequency in 
-words_and_codes <- party_documents$Labour_Party %>%
-  as.data.frame(with.meta = TRUE)
-
-all_words <- words_and_codes %>% unnest_tokens(word, text)
-
-eu_positive <- all_words %>%
-  select(party, date, word, pos, cmp_code) %>%
-  filter(cmp_code == 108)
-
-
-tfidf_codes <- eu_positive %>%
-  anti_join(get_stopwords()) %>%
-  filter(is.na(as.numeric(word))) %>%
-  filter(!(cmp_code %in% c("H", "", "0", "000", NA))) %>%
-  mutate(cmp_code = recode_v5_to_v4(cmp_code)) %>%
-  count(date, word) %>%
-  bind_tf_idf(word, date, n)
-
-tfidf_codes %>%
-  group_by(date) %>%
-  top_n(10, tf_idf) %>%
-  ggplot(aes(x = reorder(word, tf_idf), y = tf_idf, fill = date)) +
-  geom_col(show.legend = FALSE) +
-  labs(x = NULL, y = "tf-idf") +
-  facet_wrap(~date, ncol = 2, scales = "free") +
-  coord_flip()
-
-# ===========================================================================
-#   2) Exploratory data analysis 
-# ===========================================================================
-
 # Assuming 'big_corpus' is the combined dataframe for all parties
 # Unnest tokens to separate words
 all_words <- big_corpus %>% 
@@ -161,11 +125,11 @@ eu_positive <- all_words %>%
 # Compute TF-IDF while excluding stopwords and certain cmp_code values
 tfidf_codes <- eu_positive %>%
   anti_join(get_stopwords(), by = "word") %>%
-  filter(is.na(as.numeric(word))) %>%
-  filter(!(cmp_code %in% c("H", "", "0", "000", NA))) %>%
-  mutate(cmp_code = recode_v5_to_v4(cmp_code)) %>%
+  #filter(is.na(as.numeric(word))) %>%
+  #filter(!(cmp_code %in% c("H", "", "0", "000", NA))) %>%
+  #mutate(cmp_code = recode_v5_to_v4(cmp_code)) %>%
   count(party, date, word) %>% # Include party in the grouping
-  bind_tf_idf(word, date, n)
+  bind_tf_idf(word, party, n)
 
 # Plot the top 10 words by TF-IDF for each party and year
 tfidf_codes %>%
